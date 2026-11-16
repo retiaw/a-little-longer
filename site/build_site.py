@@ -224,6 +224,7 @@ def build():
     </footer>
   </div>
 {chr(10).join(sections)}
+  <footer class="copyright"><span>© 2026 <a href="https://github.com/retiaw">retiaw</a>. All rights reserved.</span></footer>
 </body>
 </html>
 """

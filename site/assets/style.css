@@ -5,6 +5,7 @@
   --rule: #e4e4e0;
   --pad: clamp(20px, 5vw, 64px);
   --bar: 64px;
+  --copyright-space: calc(32px + env(safe-area-inset-bottom, 0px));
   --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", sans-serif;
   --serif: "Iowan Old Style", "Palatino", Georgia, "Songti SC", "Noto Serif CJK SC", serif;
 }
@@ -68,6 +69,7 @@ img {
   min-height: 100vh;
   min-height: 100svh;
   padding: var(--pad);
+  padding-bottom: calc(var(--pad) + var(--copyright-space));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,6 +176,31 @@ h1 {
   margin: 40px 0 0;
 }
 
+.copyright {
+  position: fixed;
+  inset: auto auto 0 50vw;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--copyright-space);
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  margin: 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.copyright a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 /* Series sources stay in the document for no-JS readers; album.js lifts them into the reader. */
 
 .js .series {
@@ -195,7 +222,7 @@ h1 {
 
 .reader {
   position: fixed;
-  inset: 0;
+  inset: 0 0 var(--copyright-space);
   display: grid;
   grid-template-rows: var(--bar) minmax(0, 1fr) var(--bar);
   overflow: hidden;
