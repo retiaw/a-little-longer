@@ -1,0 +1,317 @@
+:root {
+  --bg: #fafaf8;
+  --ink: #1b1b1a;
+  --muted: #8a8a85;
+  --rule: #e4e4e0;
+  --pad: clamp(20px, 5vw, 64px);
+  --bar: 64px;
+  --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --serif: "Iowan Old Style", "Palatino", Georgia, "Songti SC", "Noto Serif CJK SC", serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.7 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  border: 0;
+  padding: 8px 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.eyebrow,
+.num,
+.count,
+.colophon,
+.reader-bar {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Index: the only page that lists every series. */
+
+.cover {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: var(--pad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-inner {
+  width: min(100%, 960px);
+}
+
+/* Beside the index: one photo per series, crossfading as the reader hovers the list. */
+.preview {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .cover {
+    gap: clamp(48px, 8vw, 140px);
+  }
+
+  .cover-inner {
+    width: auto;
+    flex: 0 1 560px;
+  }
+
+  .preview {
+    display: block;
+    flex: none;
+    width: min(420px, 30vw, calc((100svh - 2 * var(--pad) - 48px) * 2925 / 4626));
+    margin: 0;
+  }
+
+  .preview-frame {
+    position: relative;
+    aspect-ratio: 2925 / 4626;
+    overflow: hidden;
+  }
+
+  .preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .preview img.active {
+    opacity: 1;
+  }
+
+  .preview figcaption {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+
+  .preview figcaption .name {
+    letter-spacing: 0.08em;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 20px;
+}
+
+h1 {
+  margin: 0 0 clamp(40px, 10vh, 100px);
+  font: 400 clamp(44px, 8vw, 96px)/1.02 var(--serif);
+  letter-spacing: -0.02em;
+}
+
+.index ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 560px;
+  border-top: 1px solid var(--rule);
+}
+
+.index a {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  transition: padding 0.25s ease;
+}
+
+.index a:hover,
+.index a:focus-visible {
+  padding-left: 8px;
+}
+
+.index .name {
+  font: 400 18px/1.4 var(--serif);
+  text-transform: none;
+}
+
+.colophon {
+  margin: 40px 0 0;
+}
+
+/* Series sources stay in the document for no-JS readers; album.js lifts them into the reader. */
+
+.js .series {
+  display: none;
+}
+
+.series {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 96px var(--pad) 0;
+}
+
+.series .photos {
+  display: grid;
+  gap: 16px;
+}
+
+/* Reader: one fixed screen per page, never scrolls. */
+
+.reader {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--bar) minmax(0, 1fr) var(--bar);
+  overflow: hidden;
+}
+
+.reader-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 var(--pad);
+}
+
+.reader-bar a:hover,
+.reader-bar button:hover {
+  color: var(--ink);
+}
+
+.reader-title {
+  margin-left: auto;
+  white-space: pre;
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+
+.reader-bar .counter {
+  margin: 0 auto;
+}
+
+.reader-bar .back {
+  color: var(--ink);
+}
+
+.reader-bar .prev[hidden] + .counter {
+  margin-left: 0;
+}
+
+/* The stage padding is the margin every page keeps around its photos. */
+.stage {
+  min-height: 0;
+  padding: clamp(16px, 4vh, 48px) clamp(20px, 8vw, 128px);
+}
+
+.sheet {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.sheet.shown {
+  opacity: 1;
+}
+
+.sheet figure {
+  flex: none;
+  margin: 0;
+  overflow: hidden;
+}
+
+.sheet figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sheet-title .series-head {
+  width: min(100%, 960px);
+}
+
+.series-head .num {
+  display: block;
+  margin-bottom: 12px;
+}
+
+h2 {
+  margin: 0 0 20px;
+  font: 400 clamp(32px, 5vw, 56px)/1.12 var(--serif);
+  letter-spacing: -0.01em;
+}
+
+.series-head p {
+  max-width: 520px;
+  margin: 0 0 0.8em;
+  color: #55554f;
+}
+
+.series-head p:lang(zh-Hans) {
+  letter-spacing: 0.04em;
+  line-height: 1.9;
+}
+
+.series-head .count {
+  margin-top: 40px;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --bar: 52px;
+  }
+
+  .reader-bar {
+    gap: 16px;
+  }
+
+  .reader-title {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .preview img,
+  .index a {
+    transition: none;
+  }
+}

@@ -1,0 +1,8 @@
+# macos
+.DS_Store
+
+# agent
+.agent/
+
+# plan
+TODO.md
