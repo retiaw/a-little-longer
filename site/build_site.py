@@ -9,6 +9,8 @@ Run from the repository root:
 """
 
 import html
+import hashlib
+import json
 import re
 import shutil
 from pathlib import Path
@@ -17,6 +19,7 @@ from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 ALBUM = ROOT / "A Little Longer"
+BIO = ROOT / "bio"
 SITE = ROOT / "site"
 IMAGES = SITE / "images"
 
@@ -126,6 +129,71 @@ def render_preview(series, active):
     )
 
 
+def render_features(authors):
+    """Keep featured authors in the same index/preview shell as our own series."""
+    items, profiles = [], []
+    for number, author in enumerate(authors, 1):
+        slug = esc(author["slug"])
+        items.append(
+            f'        <li><a href="#/feature/{slug}" data-author="{slug}">'
+            f'<span class="num">{number:02d}</span>'
+            f'<span class="name">{esc(author.get("label", author["name"]))}</span>'
+            f'<span class="count">{esc(author.get("index_note", author["album"]))}</span></a></li>')
+        bio = "\n".join(
+            f'          <p{lang_attr(p)}>' + re.sub(r"\*([^*]+)\*", r"<em>\1</em>", esc(p)) + '</p>'
+            for p in author["bio"])
+        photo = author.get("photo")
+        photograph = ""
+        if photo:
+            responsive = f' srcset="{esc(photo["srcset"])}" sizes="(max-width: 900px) calc(100vw - 40px), 420px"' if photo.get("srcset") else ""
+            image = f'<img src="{esc(photo["src"])}"{responsive} width="{photo["width"]}" height="{photo["height"]}" alt="{esc(photo["alt"])}" loading="lazy" decoding="async">'
+            if photo.get("url"):
+                image = f'<a href="{esc(photo["url"])}" target="_blank" rel="noopener noreferrer" aria-label="Read {esc(author["name"])}’s bio">{image}</a>'
+            framing = ' feature-photo--self' if author["slug"] == "bio" else ""
+            photograph = f'        <figure class="feature-photo{framing}">{image}</figure>\n'
+        native = f'            <p class="author-native" lang="zh-Hans">{esc(author["native_name"])}</p>' if author.get("native_name") else ""
+        links = ""
+        if author.get("url"):
+            links = f'''          <div class="feature-links">
+            <a class="visit-album" href="{esc(author["url"])}" target="_blank" rel="noopener noreferrer">Visit {esc(author["album"])} <span aria-hidden="true">↗</span></a>
+          </div>'''
+        inactive = ' is-inactive' if number > 1 else ''
+        state = ' inert aria-hidden="true"' if number > 1 else ''
+        profiles.append(f'''      <article class="feature-bio{inactive}" data-author="{slug}"{state}>
+{photograph}        <div class="feature-copy">
+          <div class="feature-identity">
+            <h2>{esc(author["name"])}</h2>
+{native}
+          </div>
+          <div class="bio-copy">
+{bio}
+          </div>
+{links}
+        </div>
+      </article>''')
+    return "\n".join(items), "\n".join(profiles)
+
+
+def read_bio():
+    """Make the owner's README and portrait the first entry in Bio & Feature."""
+    _, paragraphs = read_readme(BIO)
+    paragraphs = [p for p in paragraphs if not p.startswith("<img ")]
+    target = SITE / "assets" / "bio"
+    target.mkdir(parents=True, exist_ok=True)
+    photo = export(BIO / "portrait.png", target, "portrait")
+    srcset = ", ".join(f"assets/bio/{name} {width}w" for name, width in photo["renditions"])
+    return {
+        "slug": "bio", "label": "Bio", "name": "Haochen Liu", "native_name": "刘浩宸",
+        "album": ALBUM.name, "index_note": "",
+        "bio": paragraphs,
+        "photo": {
+            "src": f'assets/bio/{photo["renditions"][-1][0]}', "srcset": srcset,
+            "width": photo["width"], "height": photo["height"],
+            "alt": "Haochen Liu standing by the water",
+        },
+    }
+
+
 def build():
     folders = [p for p in ALBUM.iterdir() if p.is_dir()]
     rank = {name: i for i, name in enumerate(ORDER)}
@@ -162,6 +230,13 @@ def build():
         for s in series)
 
     previews = "\n".join(render_preview(s, s is series[0]) for s in series)
+    authors = json.loads((SITE / "featured.json").read_text(encoding="utf-8"))
+    feature_items, feature_profiles = render_features([read_bio(), *authors])
+    feature_count = f'Bio · {len(authors)} featured {"author" if len(authors) == 1 else "authors"}'
+    asset_versions = {
+        name: hashlib.sha256((SITE / "assets" / name).read_bytes()).hexdigest()[:12]
+        for name in ("style.css", "album.js")
+    }
 
     sections = []
     for s in series:
@@ -186,22 +261,33 @@ def build():
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{esc(album)}</title>
   <meta name="description" content="{esc(album)} — {len(series)} series, {total} photographs.">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/style.css?v={asset_versions['style.css']}">
   <script>document.documentElement.classList.add("js")</script>
-  <script src="assets/album.js" defer></script>
+  <script src="assets/album.js?v={asset_versions['album.js']}" defer></script>
 </head>
 <body>
-  <header class="cover">
+  <header class="cover" data-view="photographs">
     <div class="cover-inner">
-      <p class="eyebrow">Photographs</p>
-      <h1>{esc(album)}</h1>
-      <nav class="index" aria-label="Series">
-        <ol>
-{index_items}
-        </ol>
+      <nav class="eyebrow cover-nav" aria-label="Sections">
+        <a href="#/" data-view="photographs" aria-current="page">Photographs</a>
+        <a href="#/feature" data-view="feature">Bio &amp; Feature</a>
       </nav>
-      <p class="colophon">{len(series)} series · {total} photographs</p>
+      <h1>{esc(album)}</h1>
+      <div class="index-panels">
+        <nav class="index" data-panel="photographs" aria-label="Series">
+          <ol>
+{index_items}
+          </ol>
+        </nav>
+        <nav class="index is-inactive" data-panel="feature" aria-label="Featured authors" inert aria-hidden="true">
+          <ol>
+{feature_items}
+          </ol>
+        </nav>
+      </div>
+      <p class="colophon" data-photographs="{len(series)} series · {total} photographs" data-feature="{esc(feature_count)}">{len(series)} series · {total} photographs</p>
     </div>
+    <div class="cover-aside">
     <figure class="preview" aria-hidden="true">
       <div class="preview-frame">
 {previews}
@@ -209,6 +295,10 @@ def build():
       <figcaption><span class="num">{series[0]["number"]:02d}</span>
         <span class="name"{lang_attr(series[0]["title"])}>{esc(series[0]["title"])}</span></figcaption>
     </figure>
+    <div class="feature-profiles is-inactive" inert aria-hidden="true" aria-live="polite">
+{feature_profiles}
+    </div>
+    </div>
   </header>
   <div class="reader" hidden>
     <header class="reader-bar">

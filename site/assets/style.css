@@ -63,7 +63,7 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
-/* Index: the only page that lists every series. */
+/* Both indexes share one shell so their columns and text stay in place. */
 
 .cover {
   min-height: 100vh;
@@ -77,6 +77,45 @@ img {
 
 .cover-inner {
   width: min(100%, 960px);
+}
+
+.cover-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.cover-nav a {
+  padding: 4px 0;
+  margin: -4px 0;
+}
+
+.cover-nav a[aria-current],
+.cover-nav a:hover,
+.cover-nav a:focus-visible {
+  color: var(--ink);
+}
+
+.index-panels,
+.cover-aside,
+.feature-profiles {
+  display: grid;
+}
+
+.index-panels > *,
+.cover-aside > *,
+.feature-profiles > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* Keep inactive panels in the grid: even one author reserves five series' height. */
+.is-inactive {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.cover-aside {
+  display: none;
 }
 
 /* Beside the index: one photo per series, crossfading as the reader hovers the list. */
@@ -94,10 +133,15 @@ img {
     flex: 0 1 560px;
   }
 
-  .preview {
-    display: block;
+  .cover-aside {
+    display: grid;
+    align-items: start;
     flex: none;
     width: min(420px, 30vw, calc((100svh - 2 * var(--pad) - 48px) * 2925 / 4626));
+  }
+
+  .preview {
+    display: block;
     margin: 0;
   }
 
@@ -174,6 +218,147 @@ h1 {
 
 .colophon {
   margin: 40px 0 0;
+}
+
+.feature-photo {
+  margin: 0 0 24px;
+}
+
+.feature-photo img {
+  width: 100%;
+  height: auto;
+}
+
+.feature-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 16px;
+}
+
+.feature-bio h2 {
+  margin: 0;
+  font-size: clamp(26px, 2.5vw, 32px);
+}
+
+.author-native {
+  margin: 0;
+  color: var(--muted);
+  font: 400 14px/1.7 var(--serif);
+  letter-spacing: 0.08em;
+}
+
+.bio-copy {
+  color: #55554f;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.bio-copy p {
+  margin: 0 0 10px;
+}
+
+.bio-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.feature-links {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.visit-album {
+  display: flex;
+  gap: 8px;
+  font: 400 11px/1.7 var(--sans);
+  letter-spacing: 0.08em;
+}
+
+.visit-album:hover,
+.visit-album:focus-visible {
+  color: #55554f;
+}
+
+/* Reframe the owner's full landscape source within the same square portrait
+   used for featured authors; keep the source photo intact. */
+.feature-photo--self {
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.feature-photo--self img {
+  height: 100%;
+  object-fit: cover;
+  object-position: 80% 50%;
+  transform: scale(1.28);
+}
+
+@media (max-width: 900px) {
+  .cover {
+    display: grid;
+    grid-template-columns: minmax(0, 960px);
+    align-content: start;
+    min-height: calc(100svh - var(--copyright-space));
+    padding-bottom: var(--pad);
+  }
+
+  /* Keep the footer below long introductions on small screens. */
+  body:has(.cover:not([hidden])) .copyright {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+  }
+
+  .cover-inner {
+    display: contents;
+  }
+
+  .cover-nav {
+    grid-row: 1;
+  }
+
+  .cover h1 {
+    grid-row: 2;
+    margin-bottom: 48px;
+  }
+
+  .index-panels {
+    grid-row: 3;
+  }
+
+  .colophon {
+    grid-row: 5;
+  }
+
+  .index-panels > .is-inactive,
+  .feature-profiles > .is-inactive {
+    display: none;
+  }
+
+  .cover[data-view="feature"] .cover-aside {
+    display: grid;
+    grid-row: 4;
+    padding-top: 32px;
+  }
+
+  .cover[data-view="feature"] .colophon {
+    margin-top: 16px;
+  }
+
+  .feature-photo {
+    margin-bottom: 20px;
+  }
+
+  .feature-identity {
+    margin-bottom: 16px;
+  }
+
+  .feature-profiles {
+    max-width: 520px;
+  }
 }
 
 .copyright {

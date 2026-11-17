@@ -1,0 +1,21 @@
+[
+  {
+    "slug": "wutao-liu",
+    "name": "Wutao Liu",
+    "native_name": "刘武韬",
+    "album": "Elsewhere",
+    "url": "https://wutaoliu.github.io/Elsewhere/",
+    "bio_url": "https://wutaoliu.github.io/Elsewhere/bio.html",
+    "photo": {
+      "src": "assets/featured/wutao-liu-portrait.webp",
+      "width": 1600,
+      "height": 1600,
+      "alt": "Wutao Liu wearing a cap and carrying a camera, half in sunlight and half in shadow",
+      "url": "https://wutaoliu.github.io/Elsewhere/bio.html"
+    },
+    "bio": [
+      "A bit of an oddball, always a rookie.",
+      "Still learning to see the world. Still wondering what lies elsewhere."
+    ]
+  }
+]

@@ -1,5 +1,7 @@
 (() => {
-  // Routes: "#/" is the index, "#/<series>/<page>" a page of one series (page 0 is its title).
+  // Routes: "#/" is our index, "#/feature/<author>" is Bio & Feature,
+  // with the owner at "#/feature/bio" and legacy "#/bio" redirecting there,
+  // and "#/<series>/<page>" a page of one series (page 0 is its title).
   // Series never link to each other; the only way between them is back through the index.
   const cover = document.querySelector(".cover");
   const reader = document.querySelector(".reader");
@@ -9,6 +11,27 @@
   const prev = reader.querySelector(".prev");
   const next = reader.querySelector(".next");
   const back = reader.querySelector(".back");
+  const albumTitle = document.querySelector("h1").textContent;
+  const colophon = cover.querySelector(".colophon");
+  const profiles = [...cover.querySelectorAll(".feature-bio")];
+  const authorLinks = [...cover.querySelectorAll("[data-author]")].filter((el) => el.tagName === "A");
+
+  const setInactive = (element, inactive) => {
+    element.classList.toggle("is-inactive", inactive);
+    element.inert = inactive;
+    if (inactive) element.setAttribute("aria-hidden", "true");
+    else element.removeAttribute("aria-hidden");
+  };
+
+  const showAuthor = (id) => {
+    const profile = profiles.find((p) => p.dataset.author === id) || profiles[0];
+    if (!profile) return;
+    profiles.forEach((p) => setInactive(p, p !== profile));
+    authorLinks.forEach((link) => {
+      if (link.dataset.author === profile.dataset.author) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    });
+  };
 
   const series = new Map([...document.querySelectorAll(".series")].map((section) => [section.id, {
     section,
@@ -124,21 +147,38 @@
     reader.hidden = false; // the stage must be visible before it can be measured
     pages = paginate(entry.figures, box());
     current = { id, page: Math.max(0, Math.min(page, pages.length)) };
-    document.title = `${entry.section.dataset.title} — ${document.querySelector("h1").textContent}`;
+    document.title = `${entry.section.dataset.title} — ${albumTitle}`;
     render();
   };
 
-  const showIndex = () => {
+  const showIndex = (view = "photographs", author) => {
     current = null;
     reader.hidden = true;
     cover.hidden = false;
+    cover.dataset.view = view;
     stage.replaceChildren();
-    document.title = document.querySelector("h1").textContent;
+    cover.querySelectorAll("[data-panel]").forEach((panel) => setInactive(panel, panel.dataset.panel !== view));
+    cover.querySelectorAll(".cover-nav a").forEach((link) => {
+      if (link.dataset.view === view) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    setInactive(cover.querySelector(".preview"), view !== "photographs");
+    // The photo preview is decorative even when visible.
+    cover.querySelector(".preview").setAttribute("aria-hidden", "true");
+    setInactive(cover.querySelector(".feature-profiles"), view !== "feature");
+    colophon.textContent = colophon.dataset[view];
+    if (view === "feature") showAuthor(author);
+    document.title = view === "photographs" ? albumTitle : `Bio & Feature — ${albumTitle}`;
   };
 
   const route = () => {
     const [id, page] = decodeURIComponent(location.hash).replace(/^#\/?/, "").split("/");
     if (!id) return showIndex();
+    if (id === "bio") {
+      location.replace("#/feature/bio");
+      return;
+    }
+    if (id === "feature") return showIndex("feature", page);
     if (current && current.id === id) {
       current.page = Math.max(0, Math.min(parseInt(page, 10) || 0, pages.length));
       render();
@@ -159,6 +199,10 @@
   next.addEventListener("click", () => go(1));
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !current && cover.dataset.view !== "photographs") {
+      location.hash = "#/";
+      return;
+    }
     if (!current || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key === "ArrowRight" || event.key === " " || event.key === "PageDown") go(1);
     else if (event.key === "ArrowLeft" || event.key === "PageUp") go(-1);
@@ -204,10 +248,15 @@
     name.textContent = img.dataset.title;
     name.lang = series.get(slug).section.lang;
   };
-  for (const link of cover.querySelectorAll(".index a")) {
+  for (const link of cover.querySelectorAll('[data-panel="photographs"] a')) {
     const slug = link.hash.replace(/^#\//, "");
     link.addEventListener("pointerenter", () => showPreview(slug));
     link.addEventListener("focus", () => showPreview(slug));
+  }
+
+  for (const link of authorLinks) {
+    link.addEventListener("pointerenter", () => showAuthor(link.dataset.author));
+    link.addEventListener("focus", () => showAuthor(link.dataset.author));
   }
 
   addEventListener("hashchange", route);
